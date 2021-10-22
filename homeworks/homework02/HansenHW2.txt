@@ -1,0 +1,63 @@
+<h1>Homework 2: Unix shell</h1>
+
+<p>This homework will assess your ability to run commands in the shell and make a simple script.</p>
+
+<p>Replace the lines specified in <em>italics</em> with your answers and save as a text file.</p>
+
+<h2>Problem 0</h2>
+
+<p><strong>60 points</strong></p>
+
+<p>Complete the interactive tutorial.</p>
+
+<p>Thanks for the tutorial--I usually join lectures from lab so only have my laptop screen for zoom-- it was helpful to be able to walk-through on my own time. No real complaints, i really appreciate the step-by-step because shell is totally new to me.</p>
+
+<h2>Problem 1</h2>
+
+<p><strong>20 points</strong></p>
+
+<p>Learn about the difference between standard out ("stdout") and standard error ("stderr") from <a href="https://www.howtogeek.com/435903/what-are-stdin-stdout-and-stderr-on-linux/">this article</a> (feel free to read the whole thing, but you can stop before the section "Detecting Redirection Within a Script").
+Note that in reading this article, you don't need to come up with a script that will throw an error: we have one at <code>tfcb_2021/lectures/lecture03/06-scripting/script2.sh</code>.</p>
+
+<p><code>$ ./script2.sh 1&gt; stdout.txt 2&gt; stderr.txt</code></p>
+
+<h2>Problem 2</h2>
+
+<p><strong>20 points</strong></p>
+
+<p>You might have noticed that the files we're dealing with have "extensions" that describe their file type.
+For example, text files are marked with <code>.txt</code>, and shell scripts are labeled with <code>.sh</code>.</p>
+
+<p>This is a handy convention which is used heavily by a command-line library called <a href="https://imagemagick.org/index.php">imagemagick</a> to manipulate images.
+ImageMagick has been installed on rhino, but needs to be loaded before you use it:</p>
+
+<pre><code>ml ImageMagick
+</code></pre>
+
+<p>Don't forget to load the updated version of parallel:</p>
+
+<pre><code>ml parallel
+</code></pre>
+
+<p>Once the library is loaded, go to the <code>lecture03/slides/images</code> directory and try</p>
+
+<pre><code>convert betty-crocker.jpg betty-crocker.png
+</code></pre>
+
+<p>which converts <code>betty-crocker.jpg</code> (a JPG image) to <code>betty-crocker.png</code> (a PNG image).
+You can confirm proper conversion using <code>file</code>.
+Now, your turn:</p>
+
+<p><code>ls *.jpg | parallel convert {} {.}.png</code></p>
+
+<p>Big hint: There is a very similar sort of command in the "Compute intensive jobs and substitution" section of the <code>parallel</code> man page.</p>
+
+<p>Next:</p>
+
+<p><code>#!/bin/sh</code>
+<code>#all jpgs to pngs</code></p>
+
+<p><code>ls *.jpg | parallel convert {} {.}.png</code>
+<code>montage *.png montage.png</code></p>
+
+<p><code>echo "jpg to png complete"</code></p>
