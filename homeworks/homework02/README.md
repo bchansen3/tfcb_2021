@@ -11,7 +11,7 @@ Replace the lines specified in _italics_ with your answers and save as a text fi
 
 Complete the interactive tutorial.
 
-_Did you hit any points of frustration, and if so, how could we improve the material to avoid that frustration?_
+Thanks for the tutorial--I usually join lectures from lab so only have my laptop screen for zoom-- it was helpful to be able to walk-through on my own time. No real complaints, i really appreciate the step-by-step because shell is totally new to me.
 
 
 ## Problem 1
