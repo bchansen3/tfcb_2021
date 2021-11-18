@@ -1,0 +1,204 @@
+---
+title: An R Markdown document converted from "lecture14.ipynb"
+output: html_document
+---
+
+# Working with Sequence Data using `R` and `Bioconductor`
+
+`Bioconductor` is a collection ([> 2000](https://www.bioconductor.org/packages/release/BiocViews.html#___Software)) of `R` packages focused on biological data analysis.
+
+**Packages we will use today**
+
+
+- [`Biostrings`](https://bioconductor.org/packages/release/bioc/html/Biostrings.html) for working with DNA, RNA, and protein sequences
+- [`rtracklayer`](https://bioconductor.org/packages/release/bioc/html/rtracklayer.html) for working with sequence annotation files (GFF, BED)
+- [`plyranges`](https://bioconductor.org/packages/release/bioc/html/plyranges.html) for a `tidyverse`-like interface to Bioconductor data objects. 
+- [`BSgenome.Hsapiens.UCSC.hg38`](https://bioconductor.org/packages/release/data/annotation/html/BSgenome.Hsapiens.UCSC.hg38.html) for human genome sequence data
+- [`GenomicFeatures`](https://bioconductor.org/packages/release/bioc/html/GenomicFeatures.html) for working with transcript annotations
+- [`ggbio`](https://www.bioconductor.org/packages/release/bioc/html/ggbio.html) GGplot2-like plotting interface for biological data
+
+## Package Installation
+
+For installing `Bioconductor` packages using `conda`, I search for the package name + `conda` for finding the relevant `conda` package name and repository.
+
+For example, the first link [here](https://www.google.com/search?q=biostrings+conda) is the `conda` package for `biostrings` which I would install as:
+
+```
+conda activate tfcb2021
+conda install -c bioconda bioconductor-biostrings
+```
+
+### Exercise
+
+Install `VariantAnnotation` and `Rsamtools` packages that you will be using in the next 2 lectures by Gavin Ha.
+
+## How to learn further
+
+- `Documentation` section of package homepage on `Bioconductor` website, eg. [`plyranges`](https://bioconductor.org/packages/release/bioc/html/plyranges.html)
+- Bioconductor workshops, eg. [`plyranges`](https://bioconductor.github.io/BiocWorkshops/fluent-genomic-data-analysis-with-plyranges.htmlhttps://bioconductor.org/workshops/plyranges/)
+- [Q & A](https://support.bioconductor.org/) section of `Bioconductor` website
+
+## Load packages
+
+Note: Many functions are named the same across different packages. For example, `select`, `n`, `rename` etc. This can lead to confusing errors.
+
+If you are getting errors when you use a function, try loading the packages in a different order or specify the package name explicitly. For example, use `dplyr::rename()`, `plyranges::select()`, etc.
+
+```{r}
+library(Biostrings)
+library(rtracklayer)
+library(plyranges)
+library(tidyverse)
+```
+
+## Working with sequence data using `Biostrings`
+
+```{r}
+seqs <- readDNAStringSet("data/tumor_suppresssors.fasta") %>%
+  print()
+```
+
+Reverse complement
+
+```{r}
+seqs %>%
+  reverseComplement()
+```
+
+Translate
+
+```{r}
+seqs %>%
+  translate()
+```
+
+Get a sub-sequence
+
+```{r}
+seqs %>%
+  subseq(1,10)
+```
+
+Calculate codon frequencies
+
+```{r}
+seqs %>%
+  oligonucleotideFrequency(width = 3, step = 3) %>%
+  as_tibble()
+```
+
+You can also read `fastq` files but not recommended for large files
+
+See `ShortRead` package for working with large number of sequence reads
+
+```{r}
+readDNAStringSet("../lecture08/barcodes_R1.fastq", format = "fastq") %>%
+  # reverseComplement() %>%
+  # # convert to a tibble
+  # as.data.frame() %>%
+  # rownames_to_column() %>%
+  # setNames(c("name", "seq")) %>%
+  # # ----------------
+  # mutate(is_HA = str_detect(seq, "CCGGATTTGCATATAATGATGCACCAT")) %>%
+  # mutate(is_NA = str_detect(seq, "CACGATAGATAAATAATAGTGCACCAT")) %>%
+  # mutate(barcode = substr(seq, nchar(seq) - 16, nchar(seq))) %>%
+  # # select(-seq)
+  # group_by(is_HA, is_NA, barcode) %>%
+  # summarize(n_HA = sum(is_HA), n_NA = sum(is_NA)) %>%
+  # filter(n_NA > 0) %>%
+  # arrange(-n_NA) %>%
+  print()
+```
+
+# How do we get sequence data for a specific gene or transcript?
+
+```{r}
+genome <- BSgenome.Hsapiens.UCSC.hg38::BSgenome.Hsapiens.UCSC.hg38
+```
+
+Chromosome names
+
+```{r}
+seqnames(genome)
+```
+
+Chromosome sequence
+
+```{r}
+chr2 <- genome$chr2
+```
+
+Read annotations for a group of genes
+
+These are a subset of the full genome annotations in the [GENCODE](https://www.gencodegenes.org/) project.
+
+```{r}
+annotations <- import.gff3("data/tumor_suppresssors.gff3") %>%
+  print()
+```
+
+We can convert from `GRanges` to  `tibble` and vice versa.
+
+```{r}
+annotations %>%
+  as_tibble() %>%
+  # distinct(type) %>%
+  distinct(gene_name) %>%
+  # GRanges()
+  print()
+```
+
+Group exons into transcripts
+
+We use `split` function with `$` to refer to columns.
+
+Each group is list of `GRanges` or a `GRangesList` object.
+
+```{r}
+transcripts <- annotations %>%
+  filter(type == "exon") %>%
+  split(.$transcript_id) 
+  # as_tibble() 
+
+transcripts
+```
+
+Visualize transcript models for *TP53* gene
+
+```{r}
+
+options(repr.plot.width = 15, repr.plot.height = 10)
+annotations %>%
+  filter(type == "exon") %>%
+  filter(gene_name == "TP53") %>%
+  split(.$transcript_id) %>%
+  ggbio::autoplot() +
+  theme_minimal()
+```
+
+## How do we extract transcript sequences?
+
+```{r}
+GenomicFeatures::extractTranscriptSeqs(genome, transcripts)
+```
+
+# In-class exercises
+
+(20 minutes)
+
+### 1. Extract the coding sequence for all the transcripts in the annotation file above. 
+
+The steps are identical to above except that you need to work with `CDS` features instead of `exon` features.
+
+If everything worked correctly, you should at least have the expected start and stop codons at the termini of each coding sequence.
+
+### 2. Find the transcripts with the longest coding sequence for each gene
+
+**Steps**
+
+- Convert annotations to a `tibble`
+- Filter for `CDS` features
+- Group by gene name and transcript id
+- Sum the `width` column for each group
+- Group by gene name and filter for the transcript with the longest `width` column
+
